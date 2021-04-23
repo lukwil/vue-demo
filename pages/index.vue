@@ -3,23 +3,24 @@
     <v-col cols="12" sm="8" md="6">
       <v-card>
         <v-card-title class="headline">
-          Welcome {{vorname}}!
+          Welcome {{firstName}}!
         </v-card-title>
         <v-card-text>
           <v-text-field
-          v-model="vorname"
+          v-model="firstName"
             label="Vorname"
           ></v-text-field>
           <v-text-field
-          v-model="nachname"
+          v-model="lastName"
             label="Nachname"
           ></v-text-field>
-
-          <name-output v-if="vollerName.trim()" :nameProp="vollerName"></name-output>
+          <update-counter></update-counter>
+          <name-output v-if="fullName.trim()" :nameProp="fullName"></name-output>
+          
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn color="error" disa @click="openAlert" :disabled="!nachname"> Open Alert </v-btn>
+          <v-btn color="error" @click="openAlert" :disabled="!lastName"> Open Alert </v-btn>
           <v-btn color="primary" nuxt to="/inspire"> Continue </v-btn>
         </v-card-actions>
       </v-card>
@@ -35,8 +36,9 @@
           v-model="search"
             label="Search"
             :loading="loading"
+            @input="isTyping = true"
           ></v-text-field>
-        <joke-output v-for="(joke, index) in jokes" :key="jokes[index]" :setup="joke.setup" :punchline="joke.punchline"></joke-output>
+        <joke-output v-for="(joke, index) in jokes" :key="index" :setup="joke.setup" :punchline="joke.punchline"></joke-output>
           <!-- <name-output v-if="vollerName.trim()" :nameProp="vollerName"></name-output> -->
         </v-card-text>
       </v-card>
@@ -50,6 +52,7 @@ import Vue from 'vue'
 import NameOutput from '~/components/NameOutput.vue'
 import JokeOutput from '~/components/JokeOutput.vue'
 import UpdateCounter from '~/components/UpdateCounter.vue'
+import {debounce} from 'debounce'
 
 export default Vue.extend({
   components: {
@@ -58,50 +61,46 @@ export default Vue.extend({
   },
   data() {
     return {
-      vorname: '',
-      nachname: '',
+      firstName: '',
+      lastName: '',
       search: '',
-      jokes: [{setup: '', punchline: ''}],
+      isTyping: false,
+      jokes: [],
       awaitSearch: false,
       loading: false,
     }
   }, 
   computed: {
-    vollerName(): string {
-      return `${this.vorname} ${this.nachname}`
+    fullName(): string {
+      return `${this.firstName} ${this.lastName}`
     }
   },
   watch: {
-    search(searchString: string) {
-      if (!this.awaitSearch) {
-        setTimeout(() => {
-          console.log(`search string: ${searchString}`)
-          this.getDataFromApi(searchString)
-          this.awaitSearch = false
-        }, 1200) // 1.2 sec delay
+    search: debounce(function() {
+      this.isTyping = false;
+    }, 1000),
+    isTyping(value: boolean) {
+      console.log(value)
+      if (!value) {
+        this.getDataFromApi(this.search);
       }
-      this.awaitSearch = true
-    },
+    }
   },
   methods: {
     openAlert() {
-      this.getDataFromApi('programming')
-      //alert('Test-Alert')
+      alert('Test-Alert')
     },
     getDataFromApi(searchString: string) {
+      console.log(`search string: ${searchString}`)
       this.loading = true;
-     // https://official-joke-api.appspot.com/jokes/programming/ten
+      // https://official-joke-api.appspot.com/jokes/programming/ten
       const path = `https://official-joke-api.appspot.com/jokes/${searchString}/ten`;
       this.$axios.$get(path).then((res: any) => {
         console.log(res)
         this.jokes = res;
         this.loading = false;
       });
-      
-
     }
   },
-
-
 })
 </script>

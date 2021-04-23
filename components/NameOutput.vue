@@ -14,6 +14,10 @@ export default Vue.extend({
       type: String,
       required: true,
     }
+  },
+  updated() {
+    console.log("component got updated")
+    this.$store.commit('increment')
   }
 })
 </script>
